@@ -1,0 +1,23 @@
+# CI cho GitLab — tương đương .github/workflows/ci.yml, cùng gate `npm run ci`.
+# Dùng file này khi host trên GitLab; host trên GitHub thì .github/workflows/ci.yml chạy.
+# (Để cả 2 trong repo không xung đột — mỗi nền tảng chỉ đọc file của nó.)
+
+# Chỉ chạy pipeline cho merge request và nhánh mặc định (tránh chạy trùng).
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+verify:
+  stage: test
+  image: node:22 # khớp .nvmrc / engines (Node >= 20.9)
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - npm run ci

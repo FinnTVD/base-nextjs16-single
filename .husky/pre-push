@@ -1,0 +1,2 @@
+# Chặn type error trước khi push (nặng hơn pre-commit nên để ở pre-push).
+npm run typecheck

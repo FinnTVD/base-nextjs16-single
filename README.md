@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# base-nextjs16-single
 
-## Getting Started
+Base template **Next.js 16** (App Router + React 19 + Turbopack) cho dự án WordPress-headless.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** — Turbopack mặc định, **Cache Components** (`use cache` + PPR) bật sẵn, **React Compiler** bật sẵn.
+- **React 19** · **TypeScript 5** · **Tailwind v4** (CSS-first, không có `tailwind.config.ts`).
+- **shadcn/ui** (`src/components/ui`) · ESLint flat-config.
+
+## Bắt đầu
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+nvm use            # Node 22 (xem .nvmrc); tối thiểu Node 20.9
+npm install
+cp .env.example .env   # rồi điền NEXT_PUBLIC_CMS, NEXT_PUBLIC_API...
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Trang mẫu PPR: [`/store/abc`](http://localhost:3000/store/abc).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Lệnh                   | Việc                                        |
+| ---------------------- | ------------------------------------------- |
+| `npm run dev`          | Dev server (Turbopack)                      |
+| `npm run build`        | Build production                            |
+| `npm run start`        | Chạy bản build                              |
+| `npm run lint`         | ESLint                                      |
+| `npm run typecheck`    | `tsc --noEmit`                              |
+| `npm run format`       | Prettier ghi                                |
+| `npm run format:check` | Prettier kiểm tra                           |
+| `npm run ci`           | lint+typecheck+format:check+build (gate CI) |
 
-## Learn More
+## Kiểm soát chất lượng (enforcement)
 
-To learn more about Next.js, take a look at the following resources:
+- **ESLint** ép chiều import giữa các tầng (xem [conventions.md](docs/conventions.md) mục 9) — import sai tầng = lỗi.
+- **Pre-commit** (Husky + lint-staged): tự `eslint --fix` + `prettier` file staged.
+- **Pre-push**: chạy `npm run typecheck`.
+- **CI** (GitHub: [.github/workflows/ci.yml](.github/workflows/ci.yml) · GitLab: [.gitlab-ci.yml](.gitlab-ci.yml)): `npm run ci` mỗi PR/push — bật branch protection / "Pipelines must succeed" để chặn merge khi đỏ.
+- **Review semantic** (use cache/Suspense/'use client'…): chạy `/code-review` trong Claude Code trên diff (đọc `AGENTS.md`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cấu trúc
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  app/            # App Router (routing + colocation riêng route trong _components/_data)
+  components/ui/  # shadcn primitives
+  configs/        # env, endpoints, routes
+  fetches/        # gọi API thô (fetchData, cf7Request, SEO RankMath)
+  services/       # nghiệp vụ (gọi qua fetches)
+  lib/ · utils/   # tiện ích
+docs/
+  conventions.md       # cấu trúc, đặt component, quy tắc "promote khi dùng chung"
+  performance-rules.md # use cache / Suspense / dynamic / anti-patterns
+```
 
-## Deploy on Vercel
+## Quy ước quan trọng (đọc trước khi code)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **[docs/conventions.md](docs/conventions.md)** — tổ chức thư mục & đặt file.
+- **[docs/performance-rules.md](docs/performance-rules.md)** — rule render/cache/performance.
+- Đã bật **React Compiler** → **không tự viết** `useMemo`/`useCallback`/`memo` trừ điểm nóng đo được.
+- Code style: **double quote + semicolon** (Prettier mặc định); Tailwind cấu hình trong `src/app/globals.css`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Môi trường
+
+| Biến                  | Ý nghĩa                                        |
+| --------------------- | ---------------------------------------------- |
+| `NEXT_PUBLIC_DOMAIN`  | Domain front-end (robots/sitemap/metadataBase) |
+| `NEXT_PUBLIC_CMS`     | WordPress headless CMS                         |
+| `NEXT_PUBLIC_API`     | Prefix REST API custom                         |
+| `NEXT_PUBLIC_API_CF7` | Contact Form 7 REST base                       |
